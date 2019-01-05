@@ -1,0 +1,258 @@
+---
+title: "Practica 2 - Tipología y Ciclo de vida de datos"
+author: "Nacho Serrano"
+date: "5 de enero de 2019"
+output:
+  pdf_document:
+    number_section: yes
+    toc: yes
+    toc_depth: 2
+  html_document:
+    number_sections: yes
+    toc_float: yes
+    toc: yes
+    toc_depth: 2
+lang: es
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=-1)
+```
+
+```{r load_libraries, include=FALSE}
+library(knitr)
+```
+
+\newpage
+
+#Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder?
+El dataset elegido para el análisis ha sido obtenido a través de este enlace de [Kaggle](https://www.kaggle.com/uciml/red-wine-quality-cortez-et-al-2009). Los datos que se han recolectado en este dataset son las características químicas de 1599 vinos, concretamente sobre el vino verde de Portugal.
+El dataset contiene 12 columnas que corresponden con las siguientes características:
+
+-	__fixed acidity__: la acidez relacionada con el vino que puede ser fija o no volátil, es decir, que no se evapora fácilmente.
+
+-	__volatile acidity__: la cantidad de ácido acético que hay en el vino, en niveles demasiado altos puede provocar un sabor desagradable a vinagre.
+
+-	__citric acid__: la cantidad de ácido cítrico que hay en el vino. Si se encuentra en pequeñas cantidades, puede agregar 'frescura' y sabor a los vinos.
+
+-	__residual sugar__: la cantidad de azúcar restante después de que se detiene la fermentación, es raro encontrar vinos con menos de 1 gramo / litro y vinos con más de 45 gramos / litro se consideran dulces.
+
+-	__chlorides__: la cantidad de sal que hay en el vino.
+
+-	__free sulfur dioxide__: la forma libre de SO2 existe en equilibrio entre el SO2 molecular (como un gas disuelto) y el ion bisulfito; Previene el crecimiento microbiano y la oxidación del vino.
+
+-	__total sulfur dioxide__: cantidad total de dióxido de azufre de formas libres y unidas de SO2; en bajas concentraciones, el SO2 es mayormente indetectable en el vino, pero a concentraciones de SO2 libres superiores a 50 ppm, el SO2 se hace evidente en la nariz y el sabor del vino.
+
+-	__Density__: la densidad del agua es cercana a la del agua según el porcentaje de alcohol y contenido de azúcar.
+
+-	__pH__: describe qué tan ácido o básico es un vino en una escala de 0 (muy ácido) a 14 (muy básico).
+
+-	__sulphates__: Muestra la cantidad de sulfatos que hay en el vino. Los sulfatos son un aditivo para el vino que puede contribuir a los niveles de dióxido de azufre (S02), que actúa como antimicrobiano y antioxidante.
+
+-	__alcohol__: el porcentaje de alcohol del vino.
+
+-	__quality__: Calidad del vino determinada por etnólogos, puntuación marcada a través de paramétros sensoriales y no químicos.
+
+El objetivo es comparar las características _volatile acidity_, _Residual sugar_, _Chlorides_, _Density_ y _pH_, para determinar la calidad del vino. 
+
+#Integración y selección de los datos de interés a analizar.
+```{r}
+wines<- read.csv("~/Master - Data Science/Tipología y ciclo de vida de los datos/Practica 2/winequality-red.csv")
+head(wines)
+```
+
+Como he comentado anteriormente no nos interesa todas las características del dataset. Procedemos a quedarnos con las características: _volatile acidity_, _Residual sugar_, _Chlorides_, _Density_ y _pH_
+```{r}
+new_wines<-data.frame(wines[,c("volatile.acidity","residual.sugar","chlorides","density","pH")])
+head(new_wines)
+```
+
+Ahora en la variable *new_wines* contiene las características que queremos analizar para determinar la calidad del vino. 
+
+#Limpieza de los datos.
+##¿Los datos contienen ceros o elementos vacíos? ¿Cómo gestionarías cada uno de estos casos?  
+```{r}
+#Para saber si hay elementos vacios
+sapply(new_wines, function(x) is.null(x))
+```
+El valor FALSE en todas las columnas nos indica que no hay elementos vacios.  
+```{r}
+#Para saber si hay Not Available
+sapply(new_wines, function(x) sum(is.na(x)))
+```
+
+Los resultados de la comprobación nos indica que no hay ningun valor Na.
+
+En este caso, el dataset no tiene ni valores vacios ni missing.
+
+##Identificación y tratamiento de valores extremos.
+```{r}
+par(mfrow=c(1,2))
+for (i in 1:5){
+  boxplot(new_wines[,i], main=names(new_wines)[i],col="gray")
+}
+par(mfrow=c(1,1))
+
+```
+
+Se observa que en todas las variables existen valores fuera de rango. Dado que tenemos una muestra de 1599 (es muy grande) vamos a eliminar los valores fuera de rango.  
+
+___Volatile Acidity___  
+```{r}
+#Los valores fuera de rango son:
+boxplot.stats(new_wines$volatile.acidity)$out
+#Eliminamos del recordset los valores outliers
+new_wines<-data.frame(new_wines[!new_wines$volatile.acidity %in% boxplot.stats(new_wines$volatile.acidity)$out,])
+boxplot(new_wines$volatile.acidity)
+```
+
+Se observa que despues de eliminar los valores fuera de rango, con los nuevos valores aparecen nuevos valores fuera de rango. En este caso, no voy a eliminarlos porque son valores que, antes de eliminar los outliers anteriores, estaban dentro del rango.  
+
+___Residual Sugar___  
+```{r}
+#Los valores fuera de rango son:
+boxplot.stats(new_wines$residual.sugar)$out
+#Eliminamos del recordset los valores outliers
+new_wines<-data.frame(new_wines[!new_wines$residual.sugar %in% boxplot.stats(new_wines$residual.sugar)$out,])
+boxplot(new_wines$residual.sugar)
+```
+
+Igual que en la anterior característica, se observa que aparecen nuevos valores fuera de rango. Por el mismo motivo que en la anterior característica no los voy a eliminar.  
+
+___Chlorides___  
+```{r}
+#Los valores fuera de rango son:
+boxplot.stats(new_wines$chlorides)$out
+#Eliminamos del recordset los valores outliers
+new_wines<-data.frame(new_wines[!new_wines$chlorides %in% boxplot.stats(new_wines$chlorides)$out,])
+boxplot(new_wines$chlorides)
+```
+
+___Density___  
+```{r}
+#Los valores fuera de rango son:
+boxplot.stats(new_wines$density)$out
+#Eliminamos del recordset los valores outliers
+new_wines<-data.frame(new_wines[!new_wines$density %in% boxplot.stats(new_wines$density)$out,])
+boxplot(new_wines$density)
+```
+
+___pH___   
+```{r}
+#Los valores fuera de rango son:
+boxplot.stats(new_wines$pH)$out
+#Eliminamos del recordset los valores outliers
+new_wines<-data.frame(new_wines[!new_wines$pH %in% boxplot.stats(new_wines$pH)$out,])
+boxplot(new_wines$pH)
+```
+Como se ha podido observer después de eliminar los valores fuera de rango, con los nuevos datos, quedan nuevos valores fuera de rango, que como ya he explicado anteriormente, no los elimino porque serían valores que quedaban dentro del rango en primer lugar.
+
+
+#Análisis de los datos.
+##Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar).
+El objetivo es determinar si un vino es de buena calidad o no. Para que un vino sea de buena calidad, se tiene que cumplir las siguientes condiciones:  
+-- _volatile acidity_ $\le$ 0.5  
+-- _Residual sugar_ $\ge$ 3  
+-- _Chlorides_ $\le$ 0.1  
+-- _Destiny_ $\le$ 1  
+-- _pH_ $\le$ 3.5  
+
+El siguiente paso es obtener un nuevo dataset con los registros que cumplan estas condiciones. Sobre este nuevo dataset será sobre el que comprobaremos que nuesta hipotesis es cierta.
+```{r}
+good_wines<-data.frame(new_wines[new_wines$volatile.acidity <= 0.5,])
+good_wines<-data.frame(good_wines[good_wines$residual.sugar >= 3,])  
+good_wines<-data.frame(good_wines[good_wines$chlorides <= 0.1,])  
+good_wines<-data.frame(good_wines[good_wines$density <= 1,])   
+good_wines<-data.frame(good_wines[good_wines$pH <= 3.5,])   
+head(good_wines)
+```
+
+La variable *good_wines* contiene `r nrow(good_wines)` registros que cumplen con las condiciones que he determinado para considerar un buen vino.
+
+##Comprobación de la normalidad y homogeneidad de la varianza.
+Para revisar si las variables estan normalizadas voy a aplicar el test de Shapiro Wilk a cada variable.
+```{r}
+#Para Volatile Acidity
+shapiro.test(good_wines$volatile.acidity)
+
+#Para Residual Sugar
+shapiro.test(good_wines$residual.sugar)
+
+#Para Chlorides
+shapiro.test(good_wines$chlorides)
+
+#Density
+shapiro.test(good_wines$density)
+
+#pH
+shapiro.test(good_wines$pH)
+```
+
+Se observa que la variable _Volatile Acidity_, _Chlorides_ y _pH_ estan normalizadas porque tienen un p-valor superior al 0.05. Sin embargo, las variables _Residual Sugar_ y _Density_ no estan normalizadas porque su p-valor es inferior al 0.05. 
+
+Seguidamente comprobamos la homogeneidad de la varianza, para ello utilizaré el test de Fligner-Killeen. Usaré este test porque es una alternativa cuando no se cumple la condición de normalidad en las muestras.  
+```{r}
+fligner.test(good_wines)
+```
+
+Como se observa, el p-valor es inferior a 0.05 y por tanto no podemos aceptar la hipótesis de que la varianza de las variables sean homogéneas.
+
+##Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc.
+La prueba estadística que voy a realizar es la regresión lineal. Para ello primero necestio introducir la característica _quality_. Como explicaba anteriormente, esta característica es la puntuación que los etnólogos han puesto a cada vino utilizando paramentros no químicos, es decir, a través del olfato, el gusto, etc.  
+Necesito introducir esta variable porque para realizar el modelo de regresión lineal voy a comparar la variable _quality_ con el resto de características.
+
+```{r echo= FALSE}
+quality<-vector(mode="integer", length = nrow(good_wines))
+good_wines<-data.frame("volatile.acidity"=good_wines$volatile.acidity,
+                       "residual.sugar"=good_wines$residual.sugar,
+                       "chlorides"=good_wines$chlorides,
+                       "density"=good_wines$density,
+                       "pH"=good_wines$pH,
+                       quality)
+for (i in 1:nrow(good_wines)){
+  good_wines[i,"quality"]<-wines[i,"quality"]
+}
+
+#Modelo de regresion lineal
+model_wines<-lm(good_wines$quality~good_wines$volatile.acidity 
+                + good_wines$residual.sugar
+                + good_wines$chlorides
+                + good_wines$density
+                + good_wines$pH, data = good_wines)
+
+```
+
+El resultado del coeficiente de determinación de la regresion lineal es $R^2$ = `r summary(model_wines)$r.squared`. El valor obtenido esta muy cerca de cero por tanto nos indica que no es fiable la predicción de la calidad del vino con este modelo de regresión.
+
+#Representación de los resultados a partir de tablas y gráficas.
+Antes de mostrar los resultados voy a exportar el dataset resultado.
+```{r}
+write.csv(good_wines,"~/Master - Data Science/Tipología y ciclo de vida de los datos/Practica 2/winequality_resultado.csv")
+```
+
+
+A continuación voy a mostrar en una tabla los valores reales (los que venían en el dataset), con los valores que se obtienen con el modelo de regresión.
+
+```{r}
+prob_q<-predict(model_wines,good_wines, type = "response")
+tbl<-data.frame(
+  real = good_wines$quality
+  , prediccion=prob_q
+  , redondeo_prediccion = round(prob_q,digits = 0)
+)
+kable(tbl)
+```
+
+```{r}
+pairs(tbl)
+```
+
+Como se puede observar la predicción no se corresponde. Además el valor de calidad que venía en el dataset es entero y el obtenido en el modelo de regresión es decimal, al redondear lo que se hace más evidente es que se diferencian. 
+
+#Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+La conclusión a la que he llegado es que a partir del dataset original donde venía recogida características químicas de vinos de Portugal, yo había marcado que dado cinco características (*volatile Acidity*, *Residual Sugar*, *Chlorides*, *Density* y *pH*) y habíendo marcado a partir de que valores consideraba que esas caracteríasticas haría un buen vino, quería comprobar que era cierto.
+Despues de realizar el análisis estadístico he comprobado que no he decidido bien en escoger las características y los valores. 
+En primer lugar no todas las variables estaban normalizadas y tampoco había una homogeneidad en la varianza, lo que ya me hacía darme cuenta de que no iba bien. Posteriormente, cuando he obtenido en el modelo de regresión que $R^2=$ `r summary(model_wines)$r.squared `, he comprobado que dado que el valor se acerca más a 0 que a 1 no podía aceptar la hipotesis de que estas variables me indicarían si un vino era de buena calidad o no.
+Una vez que tenía el modelo de regresión he comprobado los resultados reales con los predictivos y he visto que hay diferencias entre los resultados, dejando patente que no puedo resolver el problema orignal que es determinar si un vino es de buena calidad o no dependiendo de las características que había elegido.
+
