@@ -1,12 +1,12 @@
 # Limpieza-datos-vino-Portugal
 Limpieza de datos sobre un dataset de características químicas de vinos de Portugal
 
-###Autor
+### Autor
 
 Autor: Nacho Serrano.
 Asignatura: Tipología y ciclo de vida de los datos.
 
-###Contenido del repositorio
+### Contenido del repositorio
 
 Carpeta Code:
 SerranoNacho_Practica2.Rmd: es el fichero con el código R de la practica.
